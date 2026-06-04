@@ -17,8 +17,6 @@ type Participant = {
 type ViewMode = 'overview' | 'team' | 'rhythm';
 type SortKey = 'score' | 'messages' | 'reactions' | 'activeDays' | 'threads' | 'quickResponses';
 
-const accessExpiresAt = import.meta.env.VITE_DASHBOARD_EXPIRES_AT || '2026-06-04T18:45:00.000Z';
-
 const participants: Participant[] = [
   { name: 'Леонид Головин', messages: 67, words: 2642, reactions: 45, links: 7, attachments: 14, questions: 14, activeDays: 12, threads: 23, quickResponses: 10, first: '19 мая 2026' },
   { name: 'Александр', messages: 12, words: 314, reactions: 29, links: 0, attachments: 2, questions: 3, activeDays: 5, threads: 5, quickResponses: 4, first: '20 мая 2026' },
@@ -81,10 +79,6 @@ function status(person: Participant) {
   return 'На периферии';
 }
 
-function formatExpiry() {
-  return new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Yekaterinburg' }).format(new Date(accessExpiresAt));
-}
-
 function MetricCard({ label, value, detail, tone = 'neutral' }: { label: string; value: string; detail: string; tone?: 'neutral' | 'good' | 'warn' | 'cool' }) {
   return <section className={`metric-card metric-card-${tone}`}><span>{label}</span><strong>{value}</strong><small>{detail}</small></section>;
 }
@@ -105,18 +99,13 @@ function App() {
   const [query, setQuery] = useState('');
   const [showQuiet, setShowQuiet] = useState(true);
 
-  const expiryTime = new Date(accessExpiresAt).getTime();
-  if (Number.isFinite(expiryTime) && Date.now() > expiryTime) {
-    return <main className="dashboard-shell"><section className="panel panel-large"><p className="section-kicker">MAX chat intelligence</p><h1>Срок действия ссылки истек</h1><p className="header-copy">Открытый доступ к дашборду был ограничен до {formatExpiry()}. Данные чата больше не отображаются по этой публичной ссылке.</p></section></main>;
-  }
-
   const rows = useMemo(() => participants.filter((person) => showQuiet || score(person) >= 55).filter((person) => person.name.toLowerCase().includes(query.trim().toLowerCase())).sort((a, b) => (sortKey === 'score' ? score(b) - score(a) : b[sortKey] - a[sortKey])), [query, showQuiet, sortKey]);
   const leader = participants.reduce((best, person) => score(person) > score(best) ? person : best);
   const activeRate = Math.round((summary.activeAuthors / summary.visibleMembers) * 100);
   const questionRate = Math.round((summary.questions / summary.messages) * 100);
 
   return <main className="dashboard-shell">
-    <header className="dashboard-header"><div><p className="section-kicker">MAX chat intelligence</p><h1>{summary.chatTitle}</h1><p className="header-copy">Динамическая аналитика вовлеченности команды по переписке: вклад участников, инициативность, реакции, ответы и ритм обсуждений.</p></div><aside className="snapshot-panel"><span>Период анализа</span><strong>{summary.period}</strong><small>{summary.messages} сообщений, {summary.systemCards} системных карточек исключено. Доступ до {formatExpiry()}.</small></aside></header>
+    <header className="dashboard-header"><div><p className="section-kicker">MAX chat intelligence</p><h1>{summary.chatTitle}</h1><p className="header-copy">Динамическая аналитика вовлеченности команды по переписке: вклад участников, инициативность, реакции, ответы и ритм обсуждений.</p></div><aside className="snapshot-panel"><span>Период анализа</span><strong>{summary.period}</strong><small>{summary.messages} сообщений, {summary.systemCards} системных карточек исключено. Постоянный доступ, без ограничений.</small></aside></header>
     <section className="control-strip" aria-label="Фильтры дашборда"><div className="segmented-control">{(Object.keys(viewLabels) as ViewMode[]).map((mode) => <button className={view === mode ? 'is-active' : ''} key={mode} onClick={() => setView(mode)} type="button">{viewLabels[mode]}</button>)}</div><label className="search-box"><span>Поиск</span><input aria-label="Поиск участника" onChange={(event) => setQuery(event.target.value)} placeholder="Имя участника" type="search" value={query} /></label><label className="toggle-row"><input checked={showQuiet} onChange={(event) => setShowQuiet(event.target.checked)} type="checkbox" /><span>Показывать периферию</span></label></section>
     <section className="metrics-grid"><MetricCard detail={`${summary.activeAuthors} из ${summary.visibleMembers} участников писали`} label="Активная доля" tone="good" value={`${activeRate}%`} /><MetricCard detail={`остальные ${summary.silentMembers} только читали или не проявились`} label="Тихая зона" tone="warn" value={`${summary.silentMembers}`} /><MetricCard detail={`${summary.reactions} реакций на ${summary.messages} сообщений`} label="Отклик" tone="cool" value={`${(summary.reactions / summary.messages).toFixed(1)}x`} /><MetricCard detail={`${summary.threads} ветки, средний ответ ${summary.avgResponse} мин`} label="Диалог" value={`${summary.questions}`} /></section>
     {view === 'overview' && <section className="dashboard-grid"><article className="panel panel-large"><div className="panel-heading"><div><p className="section-kicker">Лидер вовлеченности</p><h2>Главный двигатель обсуждений</h2></div><span className="panel-badge">индекс {score(leader)}</span></div><div className="leader-card"><div className="leader-orbit" aria-hidden="true"><span /><strong>{leader.name.slice(0, 1)}</strong></div><div><h3>{leader.name}</h3><p>{leader.messages} сообщений, {leader.threads} инициированных обсуждений, {leader.questions} вопросов и {leader.activeDays} активных дней.</p><div className="leader-stats"><span>{leader.attachments} вложений</span><span>{leader.links} ссылок</span><span>{leader.quickResponses} быстрых ответов</span></div></div></div></article><article className="panel"><div className="panel-heading"><div><p className="section-kicker">Топ участников</p><h2>Индекс вовлеченности</h2></div></div><BarChart data={rows.slice(0, 7).map((person) => ({ label: person.name, value: score(person) }))} /></article><article className="panel"><div className="panel-heading"><div><p className="section-kicker">Динамика</p><h2>Сообщения по дням</h2></div></div><BarChart data={dailyActivity} compact /></article><article className="panel panel-insights"><div className="panel-heading"><div><p className="section-kicker">Интерпретация</p><h2>Что видно по команде</h2></div></div><ul className="insight-list"><li><strong>Ядро небольшое.</strong><span>Активно пишет 39% состава, формат похож на лидерский канал с обсуждениями.</span></li><li><strong>Отклик есть.</strong><span>{summary.reactions} реакций показывают участие без сообщений.</span></li><li><strong>Пики вечерние.</strong><span>Главная активность приходится на 20:00-23:00.</span></li><li><strong>Вопросность {questionRate}%.</strong><span>Чат используется для уточнений, обратной связи и обмена опытом.</span></li></ul></article></section>}
