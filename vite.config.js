@@ -4,4 +4,7 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   publicDir: false,
   plugins: [react()],
+  preview: {
+    allowedHosts: ['chat-production-a145.up.railway.app'],
+  },
 });
