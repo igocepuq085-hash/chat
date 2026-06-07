@@ -34,10 +34,13 @@
   font-weight: 680;
 }
 
-.quality-row strong {
+.quality-row .person-link {
+  overflow: hidden;
   color: var(--ink-soft);
   font-size: 0.88rem;
   font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .quality-row b {
