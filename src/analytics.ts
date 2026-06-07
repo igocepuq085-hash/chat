@@ -1,42 +1,10 @@
 import type { Participant } from './chatDatabase';
-
 export type RatingKey = 'impact' | 'engagement' | 'quality' | 'initiative' | 'support' | 'influence' | 'stability';
 export type ParticipantRatings = Record<RatingKey, number>;
-
 const max = { messages: 69, activeDays: 14, threads: 25, questions: 20, quickResponses: 12, reactions: 50, reactionRate: 4.2, avgWords: 69, resources: 21 };
-const cap = (value: number) => Math.min(100, Math.round(value));
-const ratio = (value: number, upper: number) => cap((value / upper) * 100);
-
-export const resources = (person: Participant) => person.links + person.attachments;
-export const avgWords = (person: Participant) => person.words / person.messages;
-export const reactionRate = (person: Participant) => person.reactions / person.messages;
-export const consistency = (person: Participant) => ratio(person.activeDays, 18);
-
-export function ratings(person: Participant): ParticipantRatings {
-  const engagement = cap(ratio(person.messages, max.messages) * 0.5 + ratio(person.activeDays, max.activeDays) * 0.3 + ratio(person.quickResponses, max.quickResponses) * 0.2);
-  const quality = cap(ratio(avgWords(person), max.avgWords) * 0.4 + ratio(resources(person), max.resources) * 0.3 + ratio(reactionRate(person), max.reactionRate) * 0.3);
-  const initiative = cap(ratio(person.threads, max.threads) * 0.6 + ratio(person.questions, max.questions) * 0.4);
-  const support = cap(ratio(person.quickResponses, max.quickResponses) * 0.6 + ratio(person.reactions, max.reactions) * 0.4);
-  const influence = cap(ratio(person.reactions, max.reactions) * 0.6 + ratio(person.threads, max.threads) * 0.4);
-  const stability = ratio(person.activeDays, max.activeDays);
-  const impact = cap(quality * 0.35 + engagement * 0.25 + support * 0.2 + stability * 0.1 + influence * 0.1);
-  return { impact, engagement, quality, initiative, support, influence, stability };
-}
-
+const cap = (value: number) => Math.min(100, Math.round(value)); const ratio = (value: number, upper: number) => cap((value / upper) * 100);
+export const resources = (person: Participant) => person.links + person.attachments; export const avgWords = (person: Participant) => person.messages ? person.words / person.messages : 0; export const reactionRate = (person: Participant) => person.messages ? person.reactions / person.messages : 0; export const consistency = (person: Participant) => ratio(person.activeDays, 18);
+export function ratings(person: Participant): ParticipantRatings { const engagement = cap(ratio(person.messages, max.messages) * .5 + ratio(person.activeDays, max.activeDays) * .3 + ratio(person.quickResponses, max.quickResponses) * .2); const quality = cap(ratio(avgWords(person), max.avgWords) * .4 + ratio(resources(person), max.resources) * .3 + ratio(reactionRate(person), max.reactionRate) * .3); const initiative = cap(ratio(person.threads, max.threads) * .6 + ratio(person.questions, max.questions) * .4); const support = cap(ratio(person.quickResponses, max.quickResponses) * .6 + ratio(person.reactions, max.reactions) * .4); const influence = cap(ratio(person.reactions, max.reactions) * .6 + ratio(person.threads, max.threads) * .4); const stability = ratio(person.activeDays, max.activeDays); const impact = cap(quality * .35 + engagement * .25 + support * .2 + stability * .1 + influence * .1); return { impact, engagement, quality, initiative, support, influence, stability }; }
 export const ratingLabels: Record<RatingKey, string> = { impact: 'Командный вклад', engagement: 'Вовлеченность', quality: 'Качество', initiative: 'Инициатива', support: 'Поддержка', influence: 'Влияние', stability: 'Стабильность' };
-
-export function role(person: Participant) {
-  const personRatings = ratings(person);
-  if (personRatings.impact < 14) return 'Наблюдатель';
-  const options: Array<[RatingKey, string]> = [['initiative', 'Инициатор'], ['quality', 'Эксперт'], ['support', 'Поддержка команды'], ['influence', 'Центр влияния'], ['stability', 'Стабильное ядро'], ['engagement', 'Драйвер обсуждений']];
-  return options.sort((a, b) => personRatings[b[0]] - personRatings[a[0]])[0][1];
-}
-
-export function report(person: Participant) {
-  const personRatings = ratings(person);
-  const ranked = (Object.keys(personRatings) as RatingKey[]).filter((key) => key !== 'impact').sort((a, b) => personRatings[b] - personRatings[a]);
-  const strengths = ranked.slice(0, 2).map((key) => ratingLabels[key]);
-  const weakest = ranked.at(-1) ?? 'engagement';
-  const recommendations: Record<Exclude<RatingKey, 'impact'>, string> = { engagement: 'Подключаться к обсуждениям чаще и распределять активность по неделе.', quality: 'Добавлять больше контекста, выводов и полезных материалов.', initiative: 'Чаще задавать вопросы и запускать новые содержательные темы.', support: 'Быстрее отвечать коллегам и поддерживать их сообщения реакциями.', influence: 'Формулировать сообщения так, чтобы они запускали продолжение диалога.', stability: 'Сделать участие более регулярным, а не концентрировать его в одном дне.' };
-  return { role: role(person), strengths, recommendation: recommendations[weakest as Exclude<RatingKey, 'impact'>], ratings: personRatings };
-}
+export function role(person: Participant) { const r = ratings(person); if (person.messages === 0) return 'Без активности в периоде'; if (r.impact < 14) return 'Эпизодический участник'; const options: Array<[RatingKey, string]> = [['initiative','Инициатор'],['quality','Эксперт'],['support','Поддержка команды'],['influence','Центр влияния'],['stability','Стабильное ядро'],['engagement','Драйвер обсуждений']]; return options.sort((a,b)=>r[b[0]]-r[a[0]])[0][1]; }
+export function report(person: Participant) { const r=ratings(person); if(person.messages===0) return { role:role(person), strengths:[] as string[], recommendation:'Метрики начнут формироваться после первого сообщения, ответа или реакции в следующем анализируемом периоде.', ratings:r, confidence:'Нет данных для оценки', summary:'Участник состоит в чате, но в доступной истории за выбранный период активность не зафиксирована.', evidence:['0 сообщений и 0 активных дней в анализируемом периоде.','Нет зафиксированных ответов, реакций, вопросов или запущенных обсуждений.','Нулевой рейтинг означает отсутствие наблюдений, а не низкое качество участия.'] }; const ranked=(Object.keys(r) as RatingKey[]).filter(k=>k!=='impact').sort((a,b)=>r[b]-r[a]); const strengths=ranked.slice(0,2).map(k=>ratingLabels[k]); const weakest=ranked.at(-1)??'engagement'; const recommendations:Record<Exclude<RatingKey,'impact'>,string>={ engagement:`Сейчас активность распределена на ${person.activeDays} дн. Следующий рост даст участие хотя бы еще в ${Math.max(2,5-person.activeDays)} днях без необходимости увеличивать объем каждого сообщения.`, quality:`Средняя длина сообщения — ${avgWords(person).toFixed(0)} слов, полезных материалов — ${resources(person)}. Усилить вклад можно короткими выводами, ссылками на результат или описанием применимости.`, initiative:`За период запущено ${person.threads} обсужд. и задано ${person.questions} вопр. Для роста инициативы полезно сформулировать одну новую тему с четким вопросом к группе.`, support:`Зафиксировано ${person.quickResponses} быстрых ответов и ${person.reactions} реакций. Больше адресных ответов коллегам повысит заметность поддерживающего вклада.`, influence:`На сообщения получено ${person.reactions} реакций, запущено ${person.threads} обсужд. Усилить влияние помогут формулировки с конкретным результатом и приглашением продолжить тему.`, stability:`Активность зафиксирована в ${person.activeDays} из 18 дней периода. Более равномерное участие сделает вклад устойчивее и заметнее для команды.` }; const evidence=[`${person.messages} сообщений за ${person.activeDays} активных дн.; средняя длина — ${avgWords(person).toFixed(0)} слов.`,`${person.threads} запущенных обсужд., ${person.questions} вопросов и ${person.quickResponses} быстрых ответов.`,`${person.reactions} реакций (${reactionRate(person).toFixed(1)} на сообщение) и ${resources(person)} полезных материалов.`]; const confidence=person.messages>=12&&person.activeDays>=4?'Высокая: данных достаточно':person.messages>=5?'Средняя: профиль уже виден':'Предварительная: мало сообщений'; const summary=r.initiative>=60?'Чаще других превращает идеи в новые обсуждения и вопросы к группе.':r.quality>=55?'Редко пишет формально: сообщения выделяются глубиной или сильным откликом.':r.support>=45?'Заметная часть вклада связана с быстрым подключением к диалогу и поддержкой коллег.':r.stability>=40?'Ценность профиля — в регулярном присутствии и последовательном участии.':'Вклад пока точечный: отдельные сообщения заметны, но данных для устойчивого профиля немного.'; return {role:role(person),strengths,recommendation:recommendations[weakest as Exclude<RatingKey,'impact'>],ratings:r,confidence,summary,evidence}; }
