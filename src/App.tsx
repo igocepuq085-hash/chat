@@ -1,138 +1,32 @@
 import { useMemo, useState } from 'react';
-import {
-  ratingLabels,
-  ratings,
-  reactionRate,
-  report,
-  resources,
-  role,
-  type RatingKey,
-} from './analytics';
+import { ratingLabels, ratings, reactionRate, report, resources, role, type RatingKey } from './analytics';
 import { chatDatabase, type Participant } from './chatDatabase';
 import './profiles.css';
 import './quality.css';
 
 type ViewMode = 'overview' | 'rankings' | 'team' | 'rhythm';
 type SortKey = RatingKey | 'messages';
-
 const { participants, dailyActivity, hourlyActivity, meta: summary } = chatDatabase;
+const viewLabels: Record<ViewMode, string> = { overview: 'Обзор', rankings: 'Рейтинги', team: 'Участники', rhythm: 'Ритм' };
+const sortLabels: Record<SortKey, string> = { impact: 'Вклад', engagement: 'Вовлеченность', quality: 'Качество', initiative: 'Инициатива', support: 'Поддержка', influence: 'Влияние', stability: 'Стабильность', messages: 'Сообщения' };
 
-const viewLabels: Record<ViewMode, string> = {
-  overview: 'Обзор',
-  rankings: 'Рейтинги',
-  team: 'Участники',
-  rhythm: 'Ритм',
-};
-
-const sortLabels: Record<SortKey, string> = {
-  impact: 'Вклад',
-  engagement: 'Вовлеченность',
-  quality: 'Качество',
-  initiative: 'Инициатива',
-  support: 'Поддержка',
-  influence: 'Влияние',
-  stability: 'Стабильность',
-  messages: 'Сообщения',
-};
-
-function MetricCard({ label, value, detail, tone = 'neutral' }: {
-  label: string;
-  value: string;
-  detail: string;
-  tone?: 'neutral' | 'good' | 'warn' | 'cool';
-}) {
-  return <section className={`metric-card metric-card-${tone}`}><span>{label}</span><strong>{value}</strong><small>{detail}</small></section>;
-}
-
-function PersonButton({ person, onSelect, className = '' }: {
-  person: Participant;
-  onSelect: (person: Participant) => void;
-  className?: string;
-}) {
-  return <button className={`person-link ${className}`} onClick={() => onSelect(person)} type="button">{person.name}</button>;
-}
-
-function BarChart({ data, compact = false, onSelect }: {
-  data: Array<{ label: string; value: number; person?: Participant }>;
-  compact?: boolean;
-  onSelect?: (person: Participant) => void;
-}) {
-  const max = Math.max(...data.map((item) => item.value), 1);
-  return <div className={compact ? 'bar-chart bar-chart-compact' : 'bar-chart'}>{data.map((item) => <div className="bar-row" key={item.label}>
-    {item.person && onSelect
-      ? <PersonButton className="bar-label" onSelect={onSelect} person={item.person} />
-      : <span className="bar-label">{item.label}</span>}
-    <div className="bar-track"><span className="bar-fill" style={{ width: `${Math.max(4, (item.value / max) * 100)}%` }} /></div>
-    <strong>{item.value}</strong>
-  </div>)}</div>;
-}
-
-function Leaderboard({ title, kicker, rows, ratingKey, onSelect }: {
-  title: string;
-  kicker: string;
-  rows: Participant[];
-  ratingKey: RatingKey;
-  onSelect: (person: Participant) => void;
-}) {
-  return <article className="panel">
-    <div className="panel-heading"><div><p className="section-kicker">{kicker}</p><h2>{title}</h2></div><span className="panel-badge">{ratingLabels[ratingKey]}</span></div>
-    <div className="quality-list">{rows.map((person, index) => <div className="quality-row" key={person.id}>
-      <span>{index + 1}</span><PersonButton onSelect={onSelect} person={person} /><b>{ratings(person)[ratingKey]}</b>
-    </div>)}</div>
-  </article>;
-}
-
-function RatingBars({ person }: { person: Participant }) {
-  const personRatings = ratings(person);
-  return <div className="profile-ratings">{(Object.keys(personRatings) as RatingKey[]).map((key) => <div className="profile-rating" key={key}>
-    <div><span>{ratingLabels[key]}</span><strong>{personRatings[key]}</strong></div>
-    <div className="profile-rating-track"><span style={{ width: `${personRatings[key]}%` }} /></div>
-  </div>)}</div>;
-}
-
-function ParticipantReport({ person, onClose }: { person: Participant; onClose: () => void }) {
-  const personalReport = report(person);
-  return <div className="profile-backdrop" onClick={onClose} role="presentation">
-    <aside aria-label={`Отчет участника ${person.name}`} className="profile-sheet" onClick={(event) => event.stopPropagation()}>
-      <button aria-label="Закрыть отчет" className="profile-close" onClick={onClose} type="button">×</button>
-      <div className="profile-hero">
-        <span className="profile-avatar">{person.name.slice(0, 1)}</span>
-        <div><p className="section-kicker">Персональный отчет</p><h2>{person.name}</h2><span className="role-badge">{personalReport.role}</span></div>
-        <strong className="profile-impact">{personalReport.ratings.impact}<small>вклад</small></strong>
-      </div>
-      <section className="profile-section"><p className="section-kicker">Профиль вклада</p><RatingBars person={person} /></section>
-      <section className="profile-section profile-summary-grid">
-        <div><span>Сообщения</span><strong>{person.messages}</strong></div><div><span>Активные дни</span><strong>{person.activeDays}</strong></div><div><span>Обсуждения</span><strong>{person.threads}</strong></div><div><span>Быстрые ответы</span><strong>{person.quickResponses}</strong></div><div><span>Реакции / сообщ.</span><strong>{reactionRate(person).toFixed(1)}</strong></div><div><span>Ресурсы</span><strong>{resources(person)}</strong></div>
-      </section>
-      <section className="profile-section profile-notes"><div><span>Сильные стороны</span><strong>{personalReport.strengths.join(' · ')}</strong></div><div><span>Следующий шаг</span><p>{personalReport.recommendation}</p></div><div><span>Динамика</span><p>Первая контрольная точка сохранена. Изменение рейтинга появится после следующего воскресного обновления.</p></div></section>
-    </aside>
-  </div>;
-}
-
-function ranking(key: RatingKey) {
-  return [...participants].sort((a, b) => ratings(b)[key] - ratings(a)[key]);
-}
+function MetricCard({ label, value, detail, tone = 'neutral' }: { label: string; value: string; detail: string; tone?: 'neutral' | 'good' | 'warn' | 'cool' }) { return <section className={`metric-card metric-card-${tone}`}><span>{label}</span><strong>{value}</strong><small>{detail}</small></section>; }
+function PersonButton({ person, onSelect, className = '' }: { person: Participant; onSelect: (person: Participant) => void; className?: string }) { return <button className={`person-link ${className}`} onClick={() => onSelect(person)} type="button">{person.name}</button>; }
+function BarChart({ data, compact = false, onSelect }: { data: Array<{ label: string; value: number; person?: Participant }>; compact?: boolean; onSelect?: (person: Participant) => void }) { const max = Math.max(...data.map((item) => item.value), 1); return <div className={compact ? 'bar-chart bar-chart-compact' : 'bar-chart'}>{data.map((item) => <div className="bar-row" key={item.label}>{item.person && onSelect ? <PersonButton className="bar-label" onSelect={onSelect} person={item.person} /> : <span className="bar-label">{item.label}</span>}<div className="bar-track"><span className="bar-fill" style={{ width: `${Math.max(4, (item.value / max) * 100)}%` }} /></div><strong>{item.value}</strong></div>)}</div>; }
+function Leaderboard({ title, kicker, rows, ratingKey, onSelect }: { title: string; kicker: string; rows: Participant[]; ratingKey: RatingKey; onSelect: (person: Participant) => void }) { return <article className="panel"><div className="panel-heading"><div><p className="section-kicker">{kicker}</p><h2>{title}</h2></div><span className="panel-badge">{ratingLabels[ratingKey]}</span></div><div className="quality-list">{rows.map((person, index) => <div className="quality-row" key={person.id}><span>{index + 1}</span><PersonButton onSelect={onSelect} person={person} /><b>{ratings(person)[ratingKey]}</b></div>)}</div></article>; }
+function RatingBars({ person }: { person: Participant }) { const personRatings = ratings(person); return <div className="profile-ratings">{(Object.keys(personRatings) as RatingKey[]).map((key) => <div className="profile-rating" key={key}><div><span>{ratingLabels[key]}</span><strong>{personRatings[key]}</strong></div><div className="profile-rating-track"><span style={{ width: `${personRatings[key]}%` }} /></div></div>)}</div>; }
+function ParticipantReport({ person, onClose }: { person: Participant; onClose: () => void }) { const personalReport = report(person); return <div className="profile-backdrop" onClick={onClose} role="presentation"><aside aria-label={`Отчет участника ${person.name}`} className="profile-sheet" onClick={(event) => event.stopPropagation()}><button aria-label="Закрыть отчет" className="profile-close" onClick={onClose} type="button">×</button><div className="profile-hero"><span className="profile-avatar">{person.name.slice(0, 1)}</span><div><p className="section-kicker">Персональный отчет</p><h2>{person.name}</h2><span className="role-badge">{personalReport.role}</span></div><strong className="profile-impact">{personalReport.ratings.impact}<small>вклад</small></strong></div><section className="profile-section"><p className="section-kicker">Профиль вклада</p><RatingBars person={person} /></section><section className="profile-section profile-summary-grid"><div><span>Сообщения</span><strong>{person.messages}</strong></div><div><span>Активные дни</span><strong>{person.activeDays}</strong></div><div><span>Обсуждения</span><strong>{person.threads}</strong></div><div><span>Быстрые ответы</span><strong>{person.quickResponses}</strong></div><div><span>Реакции / сообщ.</span><strong>{reactionRate(person).toFixed(1)}</strong></div><div><span>Ресурсы</span><strong>{resources(person)}</strong></div></section><section className="profile-section profile-notes"><div><span>Вывод</span><p>{personalReport.summary}</p></div><div><span>Уверенность оценки</span><strong>{personalReport.confidence}</strong></div><div><span>Сильные стороны</span><strong>{personalReport.strengths.length ? personalReport.strengths.join(' · ') : 'Появятся после первых сообщений'}</strong></div><div><span>Факты</span><ul>{personalReport.evidence.map((item) => <li key={item}>{item}</li>)}</ul></div><div><span>Следующий шаг</span><p>{personalReport.recommendation}</p></div><div><span>Динамика</span><p>Первая контрольная точка сохранена. Изменение рейтинга появится после следующего воскресного обновления.</p></div></section></aside></div>; }
+function ranking(key: RatingKey) { return [...participants].sort((a, b) => ratings(b)[key] - ratings(a)[key]); }
 
 function App() {
-  const [view, setView] = useState<ViewMode>('overview');
-  const [sortKey, setSortKey] = useState<SortKey>('impact');
-  const [query, setQuery] = useState('');
-  const [showQuiet, setShowQuiet] = useState(true);
-  const [selectedPerson, setSelectedPerson] = useState<Participant | null>(null);
+  const [view, setView] = useState<ViewMode>('overview'); const [sortKey, setSortKey] = useState<SortKey>('impact'); const [query, setQuery] = useState(''); const [showQuiet, setShowQuiet] = useState(true); const [selectedPerson, setSelectedPerson] = useState<Participant | null>(null);
   const rows = useMemo(() => participants.filter((person) => showQuiet || ratings(person).impact >= 25).filter((person) => person.name.toLowerCase().includes(query.trim().toLowerCase())).sort((a, b) => sortKey === 'messages' ? b.messages - a.messages : ratings(b)[sortKey] - ratings(a)[sortKey]), [query, showQuiet, sortKey]);
-  const leader = ranking('impact')[0];
-  const activeRate = Math.round((summary.activeAuthors / summary.visibleMembers) * 100);
-  const leaderShare = Math.round((leader.messages / summary.messages) * 100);
-  const top3Share = Math.round((participants.slice(0, 3).reduce((sum, person) => sum + person.messages, 0) / summary.messages) * 100);
-
-  return <main className="dashboard-shell"><header className="dashboard-header"><div><p className="section-kicker">MAX chat intelligence · обновлено {summary.updatedAt}</p><h1>{summary.chatTitle}</h1><p className="header-copy">Рейтинги показывают не только активность, но и качество вклада, влияние, инициативу, поддержку коллег и стабильность участия.</p></div><aside className="snapshot-panel"><span>Период анализа</span><strong>{summary.period}</strong><small>{summary.messages} сообщений · {summary.visibleMembers} участника · обновление {summary.nextUpdate}</small></aside></header>
-    <section className="control-strip"><div className="segmented-control">{(Object.keys(viewLabels) as ViewMode[]).map((mode) => <button className={view === mode ? 'is-active' : ''} key={mode} onClick={() => setView(mode)} type="button">{viewLabels[mode]}</button>)}</div><label className="search-box"><span>Поиск</span><input onChange={(event) => setQuery(event.target.value)} placeholder="Имя участника" type="search" value={query} /></label><label className="toggle-row"><input checked={showQuiet} onChange={(event) => setShowQuiet(event.target.checked)} type="checkbox" /><span>Показывать периферию</span></label></section>
-    <section className="metrics-grid"><MetricCard detail={`${summary.activeAuthors} из ${summary.visibleMembers} участников писали`} label="Активная доля" tone="good" value={`${activeRate}%`} /><MetricCard detail="доля сообщений самого активного автора" label="Зависимость от лидера" tone="warn" value={`${leaderShare}%`} /><MetricCard detail="доля сообщений трех самых активных авторов" label="Концентрация топ-3" tone="cool" value={`${top3Share}%`} /><MetricCard detail={`${summary.reactions} реакций на ${summary.messages} сообщений`} label="Отклик" value={`${(summary.reactions / summary.messages).toFixed(1)}x`} /></section>
-    {view === 'overview' && <section className="dashboard-grid"><article className="panel panel-large"><div className="panel-heading"><div><p className="section-kicker">Командный вклад</p><h2>Лидер сбалансированного участия</h2></div><span className="panel-badge">индекс {ratings(leader).impact}</span></div><div className="leader-card"><div className="leader-orbit"><span /><strong>{leader.name.slice(0, 1)}</strong></div><div><PersonButton className="leader-name" onSelect={setSelectedPerson} person={leader} /><p>{role(leader)}: {leader.messages} сообщений, {leader.threads} запущенных обсуждений, {leader.questions} вопросов и {leader.activeDays} активных дней.</p><div className="leader-stats"><span>{ratings(leader).quality} качество</span><span>{ratings(leader).support} поддержка</span><span>{ratings(leader).influence} влияние</span></div></div></div></article><article className="panel"><div className="panel-heading"><div><p className="section-kicker">Главный рейтинг</p><h2>Team Impact Score</h2></div></div><BarChart data={ranking('impact').slice(0, 7).map((person) => ({ label: person.name, value: ratings(person).impact, person }))} onSelect={setSelectedPerson} /></article><article className="panel"><div className="panel-heading"><div><p className="section-kicker">Динамика</p><h2>Сообщения по дням</h2></div></div><BarChart compact data={dailyActivity} /></article><article className="panel panel-insights"><div className="panel-heading"><div><p className="section-kicker">Методика</p><h2>Как считается командный вклад</h2></div></div><ul className="insight-list"><li><strong>35% · качество.</strong><span>Глубина сообщений, полезные материалы и реакции на одно сообщение.</span></li><li><strong>25% · вовлеченность.</strong><span>Объем участия, активные дни и быстрые ответы.</span></li><li><strong>20% · поддержка.</strong><span>Ответы коллегам и реакции, помогающие поддерживать диалог.</span></li><li><strong>20% · стабильность и влияние.</strong><span>Регулярное участие и способность запускать продолжение обсуждения.</span></li></ul></article></section>}
-    {view === 'rankings' && <section className="dashboard-grid quality-grid"><Leaderboard kicker="Общий результат" onSelect={setSelectedPerson} ratingKey="impact" rows={ranking('impact').slice(0, 7)} title="Командный вклад" /><Leaderboard kicker="Содержание" onSelect={setSelectedPerson} ratingKey="quality" rows={ranking('quality').slice(0, 7)} title="Качество вклада" /><Leaderboard kicker="Новые темы" onSelect={setSelectedPerson} ratingKey="initiative" rows={ranking('initiative').slice(0, 7)} title="Инициаторы" /><Leaderboard kicker="Ответы коллегам" onSelect={setSelectedPerson} ratingKey="support" rows={ranking('support').slice(0, 7)} title="Поддержка команды" /><Leaderboard kicker="Продолжение диалога" onSelect={setSelectedPerson} ratingKey="influence" rows={ranking('influence').slice(0, 7)} title="Влияние" /><Leaderboard kicker="Регулярность" onSelect={setSelectedPerson} ratingKey="stability" rows={ranking('stability').slice(0, 7)} title="Стабильное ядро" /></section>}
-    {view === 'team' && <section className="team-view"><div className="panel-heading team-heading"><div><p className="section-kicker">Персональные отчеты</p><h2>Участники и роли</h2></div><div className="sort-control">{(Object.keys(sortLabels) as SortKey[]).map((key) => <button className={sortKey === key ? 'is-active' : ''} key={key} onClick={() => setSortKey(key)} type="button">{sortLabels[key]}</button>)}</div></div><div className="table-shell"><table><thead><tr><th>Участник</th><th>Роль</th><th>Вклад</th><th>Качество</th><th>Инициатива</th><th>Поддержка</th><th>Влияние</th><th>Стабильность</th><th>Сообщ.</th></tr></thead><tbody>{rows.map((person) => <tr key={person.id}><td><div className="person-cell"><span>{person.name.slice(0, 1)}</span><PersonButton onSelect={setSelectedPerson} person={person} /></div></td><td><span className="role-badge">{role(person)}</span></td><td><strong>{ratings(person).impact}</strong></td><td>{ratings(person).quality}</td><td>{ratings(person).initiative}</td><td>{ratings(person).support}</td><td>{ratings(person).influence}</td><td>{ratings(person).stability}</td><td>{person.messages}</td></tr>)}</tbody></table></div></section>}
-    {view === 'rhythm' && <section className="dashboard-grid rhythm-grid"><article className="panel panel-large"><div className="panel-heading"><div><p className="section-kicker">Тепловая карта</p><h2>Когда команда оживает</h2></div><span className="panel-badge">пик 23:00</span></div><div className="heatmap">{hourlyActivity.map((item) => <div className="heat-cell" key={item.label}><span style={{ opacity: 0.2 + item.value / 40 }} /><strong>{item.label}</strong><small>{item.value}</small></div>)}</div></article><article className="panel"><div className="panel-heading"><div><p className="section-kicker">Инициаторы</p><h2>Запускают обсуждения</h2></div></div><BarChart data={ranking('initiative').slice(0, 8).map((person) => ({ label: person.name, value: ratings(person).initiative, person }))} onSelect={setSelectedPerson} /></article><article className="panel"><div className="panel-heading"><div><p className="section-kicker">Поддержка</p><h2>Подхватывают диалог</h2></div></div><BarChart data={ranking('support').slice(0, 8).map((person) => ({ label: person.name, value: ratings(person).support, person }))} onSelect={setSelectedPerson} /></article></section>}
-    <footer className="data-footer"><span>Снимок базы: {summary.updatedAt}</span><span>Следующее обновление: воскресенье</span><span>Курсор импорта: {summary.lastMessageCursor}</span></footer>{selectedPerson && <ParticipantReport onClose={() => setSelectedPerson(null)} person={selectedPerson} />}</main>;
+  const leader = ranking('impact')[0]; const activeRate = Math.round((summary.activeAuthors / summary.visibleMembers) * 100); const leaderShare = Math.round((leader.messages / summary.messages) * 100); const top3Share = Math.round((participants.slice(0, 3).reduce((sum, person) => sum + person.messages, 0) / summary.messages) * 100);
+  return <main className="dashboard-shell"><header className="dashboard-header"><div><p className="section-kicker">MAX chat intelligence · обновлено {summary.updatedAt}</p><h1>{summary.chatTitle}</h1><p className="header-copy">Рейтинги показывают не только активность, но и качество вклада, влияние, инициативу, поддержку коллег и стабильность участия.</p></div><aside className="snapshot-panel"><span>Период анализа</span><strong>{summary.period}</strong><small>{summary.messages} сообщений · {summary.visibleMembers} участника в базе · обновление {summary.nextUpdate}</small></aside></header><section className="control-strip"><div className="segmented-control">{(Object.keys(viewLabels) as ViewMode[]).map((mode) => <button className={view === mode ? 'is-active' : ''} key={mode} onClick={() => setView(mode)} type="button">{viewLabels[mode]}</button>)}</div><label className="search-box"><span>Поиск</span><input onChange={(event) => setQuery(event.target.value)} placeholder="Имя участника" type="search" value={query} /></label><label className="toggle-row"><input checked={showQuiet} onChange={(event) => setShowQuiet(event.target.checked)} type="checkbox" /><span>Показывать периферию</span></label></section><section className="metrics-grid"><MetricCard detail={`${summary.activeAuthors} из ${summary.visibleMembers} участников писали, остальные показаны с нулевыми метриками`} label="Активная доля" tone="good" value={`${activeRate}%`} /><MetricCard detail="доля сообщений самого активного автора" label="Зависимость от лидера" tone="warn" value={`${leaderShare}%`} /><MetricCard detail="доля сообщений трех самых активных авторов" label="Концентрация топ-3" tone="cool" value={`${top3Share}%`} /><MetricCard detail={`${summary.reactions} реакций на ${summary.messages} сообщений`} label="Отклик" value={`${(summary.reactions / summary.messages).toFixed(1)}x`} /></section>
+  {view === 'overview' && <section className="dashboard-grid"><article className="panel panel-large"><div className="panel-heading"><div><p className="section-kicker">Командный вклад</p><h2>Лидер сбалансированного участия</h2></div><span className="panel-badge">индекс {ratings(leader).impact}</span></div><div className="leader-card"><div className="leader-orbit"><span /><strong>{leader.name.slice(0, 1)}</strong></div><div><PersonButton className="leader-name" onSelect={setSelectedPerson} person={leader} /><p>{role(leader)}: {leader.messages} сообщений, {leader.threads} запущенных обсуждений, {leader.questions} вопросов и {leader.activeDays} активных дней.</p><div className="leader-stats"><span>{ratings(leader).quality} качество</span><span>{ratings(leader).support} поддержка</span><span>{ratings(leader).influence} влияние</span></div></div></div></article><article className="panel"><div className="panel-heading"><div><p className="section-kicker">Главный рейтинг</p><h2>Team Impact Score</h2></div></div><BarChart data={ranking('impact').slice(0, 7).map((person) => ({ label: person.name, value: ratings(person).impact, person }))} onSelect={setSelectedPerson} /></article><article className="panel"><div className="panel-heading"><div><p className="section-kicker">Динамика</p><h2>Сообщения по дням</h2></div></div><BarChart compact data={dailyActivity} /></article><article className="panel panel-insights"><div className="panel-heading"><div><p className="section-kicker">Методика</p><h2>Как считается командный вклад</h2></div></div><ul className="insight-list"><li><strong>35% · качество.</strong><span>Глубина сообщений, полезные материалы и реакции на одно сообщение.</span></li><li><strong>25% · вовлеченность.</strong><span>Объем участия, активные дни и быстрые ответы.</span></li><li><strong>20% · поддержка.</strong><span>Ответы коллегам и реакции, помогающие поддерживать диалог.</span></li><li><strong>20% · стабильность и влияние.</strong><span>Регулярное участие и способность запускать продолжение обсуждения.</span></li></ul></article></section>}
+  {view === 'rankings' && <section className="dashboard-grid quality-grid"><Leaderboard kicker="Общий результат" onSelect={setSelectedPerson} ratingKey="impact" rows={ranking('impact').slice(0, 7)} title="Командный вклад" /><Leaderboard kicker="Содержание" onSelect={setSelectedPerson} ratingKey="quality" rows={ranking('quality').slice(0, 7)} title="Качество вклада" /><Leaderboard kicker="Новые темы" onSelect={setSelectedPerson} ratingKey="initiative" rows={ranking('initiative').slice(0, 7)} title="Инициаторы" /><Leaderboard kicker="Ответы коллегам" onSelect={setSelectedPerson} ratingKey="support" rows={ranking('support').slice(0, 7)} title="Поддержка команды" /><Leaderboard kicker="Продолжение диалога" onSelect={setSelectedPerson} ratingKey="influence" rows={ranking('influence').slice(0, 7)} title="Влияние" /><Leaderboard kicker="Регулярность" onSelect={setSelectedPerson} ratingKey="stability" rows={ranking('stability').slice(0, 7)} title="Стабильное ядро" /></section>}
+  {view === 'team' && <section className="team-view"><div className="panel-heading team-heading"><div><p className="section-kicker">Персональные отчеты</p><h2>Участники и роли</h2></div><div className="sort-control">{(Object.keys(sortLabels) as SortKey[]).map((key) => <button className={sortKey === key ? 'is-active' : ''} key={key} onClick={() => setSortKey(key)} type="button">{sortLabels[key]}</button>)}</div></div><div className="table-shell"><table><thead><tr><th>Участник</th><th>Роль</th><th>Вклад</th><th>Качество</th><th>Инициатива</th><th>Поддержка</th><th>Влияние</th><th>Стабильность</th><th>Сообщ.</th></tr></thead><tbody>{rows.map((person) => <tr key={person.id}><td><div className="person-cell"><span>{person.name.slice(0, 1)}</span><PersonButton onSelect={setSelectedPerson} person={person} /></div></td><td><span className="role-badge">{role(person)}</span></td><td><strong>{ratings(person).impact}</strong></td><td>{ratings(person).quality}</td><td>{ratings(person).initiative}</td><td>{ratings(person).support}</td><td>{ratings(person).influence}</td><td>{ratings(person).stability}</td><td>{person.messages}</td></tr>)}</tbody></table></div></section>}
+  {view === 'rhythm' && <section className="dashboard-grid rhythm-grid"><article className="panel panel-large"><div className="panel-heading"><div><p className="section-kicker">Тепловая карта</p><h2>Когда команда оживает</h2></div><span className="panel-badge">пик 23:00</span></div><div className="heatmap">{hourlyActivity.map((item) => <div className="heat-cell" key={item.label}><span style={{ opacity: 0.2 + item.value / 40 }} /><strong>{item.label}</strong><small>{item.value}</small></div>)}</div></article><article className="panel"><div className="panel-heading"><div><p className="section-kicker">Инициаторы</p><h2>Запускают обсуждения</h2></div></div><BarChart data={ranking('initiative').slice(0, 8).map((person) => ({ label: person.name, value: ratings(person).initiative, person }))} onSelect={setSelectedPerson} /></article><article className="panel"><div className="panel-heading"><div><p className="section-kicker">Поддержка</p><h2>Подхватывают диалог</h2></div></div><BarChart data={ranking('support').slice(0, 8).map((person) => ({ label: person.name, value: ratings(person).support, person }))} onSelect={setSelectedPerson} /></article></section>}
+  <footer className="data-footer"><span>Снимок базы: {summary.updatedAt}</span><span>Список участников сверен: {summary.rosterCheckedAt}</span><span>Следующее обновление: воскресенье</span><span>Курсор импорта: {summary.lastMessageCursor}</span></footer>{selectedPerson && <ParticipantReport onClose={() => setSelectedPerson(null)} person={selectedPerson} />}</main>;
 }
-
 export default App;
