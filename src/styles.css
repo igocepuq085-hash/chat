@@ -405,6 +405,250 @@ p {
   min-height: 88px;
 }
 
+.reputation-grid {
+  grid-template-columns: minmax(0, 1.24fr) minmax(360px, 0.76fr);
+}
+
+.reputation-leader-card {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  gap: 32px;
+  align-items: center;
+}
+
+.reputation-orbit {
+  width: 190px;
+}
+
+.reputation-components {
+  display: grid;
+  gap: 9px;
+  margin-top: 20px;
+}
+
+.reputation-component {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr) 34px;
+  gap: 10px;
+  align-items: center;
+}
+
+.reputation-component span,
+.reputation-person small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 560;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reputation-component div {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(22, 22, 23, 0.065);
+}
+
+.reputation-component i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #111113, #0071e3 55%, #58c472);
+  box-shadow: 0 0 18px rgba(0, 113, 227, 0.18);
+}
+
+.reputation-component b,
+.reputation-score {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.reputation-list {
+  display: grid;
+  gap: 10px;
+}
+
+.reputation-row {
+  display: grid;
+  grid-template-columns: 36px minmax(170px, 1fr) minmax(160px, 0.72fr) 54px;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.reputation-medal {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #161617;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 680;
+}
+
+.reputation-person {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.reputation-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.reputation-badges span {
+  padding: 5px 8px;
+  border: 1px solid rgba(0, 113, 227, 0.13);
+  border-radius: 999px;
+  background: var(--blue-soft);
+  color: var(--blue);
+  font-size: 0.72rem;
+  font-weight: 620;
+}
+
+.reputation-score {
+  justify-self: end;
+  font-size: 1.34rem;
+  font-weight: 650;
+}
+
+.semantic-grid {
+  grid-template-columns: minmax(0, 1.28fr) minmax(360px, 0.72fr);
+}
+
+.semantic-leader {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 30px;
+  align-items: center;
+  min-height: 310px;
+}
+
+.semantic-score-ring {
+  display: grid;
+  place-items: center;
+  width: 170px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 50%, #fff 0 52%, transparent 53%),
+    conic-gradient(from 210deg, #111113, #0071e3, #58c472, #111113);
+  color: #111113;
+  font-size: 3.3rem;
+  font-weight: 650;
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, 0.08),
+    0 0 0 12px rgba(0, 113, 227, 0.04);
+}
+
+.semantic-name {
+  color: var(--ink);
+  font-weight: 650;
+}
+
+.semantic-list {
+  display: grid;
+  gap: 12px;
+}
+
+.semantic-row {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 82px;
+  gap: 13px;
+  align-items: start;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.64);
+}
+
+.semantic-main {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.semantic-main small,
+.semantic-score span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 580;
+}
+
+.semantic-main p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.84rem;
+  line-height: 1.48;
+}
+
+.semantic-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.semantic-tags span {
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(245, 245, 247, 0.84);
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 620;
+}
+
+.semantic-stack {
+  display: flex;
+  width: 100%;
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(22, 22, 23, 0.065);
+}
+
+.semantic-stack i {
+  display: block;
+  min-width: 4px;
+}
+
+.semantic-stack i:nth-child(1) {
+  background: #0071e3;
+}
+
+.semantic-stack i:nth-child(2) {
+  background: #248a3d;
+}
+
+.semantic-stack i:nth-child(3) {
+  background: #b65c00;
+}
+
+.semantic-stack i:nth-child(4) {
+  background: #161617;
+}
+
+.semantic-score {
+  display: grid;
+  gap: 4px;
+  justify-items: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.semantic-score strong {
+  color: var(--ink);
+  font-size: 1.55rem;
+  font-weight: 660;
+}
+
 .panel-heading,
 .team-heading {
   display: flex;
@@ -796,7 +1040,9 @@ tbody tr:last-child td {
   }
 
   .metrics-grid,
-  .leader-card {
+  .leader-card,
+  .reputation-leader-card,
+  .semantic-leader {
     grid-template-columns: 1fr;
   }
 
@@ -822,6 +1068,34 @@ tbody tr:last-child td {
   .leader-orbit {
     width: min(190px, 80%);
     justify-self: center;
+  }
+
+  .reputation-row {
+    grid-template-columns: 32px minmax(0, 1fr) 44px;
+  }
+
+  .reputation-badges {
+    grid-column: 2 / -1;
+  }
+
+  .reputation-component {
+    grid-template-columns: 78px minmax(0, 1fr) 30px;
+  }
+
+  .semantic-score-ring {
+    width: min(170px, 78%);
+    justify-self: center;
+  }
+
+  .semantic-row {
+    grid-template-columns: 32px minmax(0, 1fr);
+  }
+
+  .semantic-score {
+    grid-column: 2 / -1;
+    grid-template-columns: repeat(3, auto);
+    justify-content: start;
+    justify-items: start;
   }
 
   .bar-row {
