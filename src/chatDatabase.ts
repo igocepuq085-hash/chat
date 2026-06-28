@@ -102,7 +102,7 @@ export const chatDatabase = {
     notes: [
       'Парсинг выполнен по правой панели чата MAX: 20 элементов левой панели и превью чатов исключены из подсчета.',
       '23 июня виден только служебно-контактный блок без времени сообщения, поэтому он не засчитан как участническое сообщение.',
-      'Цепочка 25 июня имеет входящий пузырь и ближайший явный авторский контекст Сергея Тихонова; MAX не раскрыл отдельную подпись автора у этих двух сообщений.',
+      'Цепочка 25 июня принадлежит Екатерине; MAX не раскрыл отдельную подпись автора у этих двух сообщений, поэтому атрибуция исправлена по ручной сверке участника.',
     ],
   } satisfies WeeklySummary,
   semanticSummary: {
@@ -114,10 +114,10 @@ export const chatDatabase = {
       'Из MAX извлечена только правая панель целевого чата; превью, список чатов, закрепы и служебные блоки не попали в смысловой подсчет.',
       'Смысловая активность недели низкая: найден короткий follow-up с вложением и одним поясняющим сообщением, без новых вопросов и без ветвления обсуждения.',
       '23 июня виден контактно-служебный блок без времени сообщения, поэтому он не учитывался как вклад участника.',
-      'Авторская подпись двух сообщений 25 июня не раскрылась отдельной строкой в DOM; цепочка привязана к ближайшему явному авторскому контексту и помечена как осторожная оценка.',
+      'Авторская подпись двух сообщений 25 июня не раскрылась отдельной строкой в DOM; после ручной сверки цепочка отнесена к Екатерине.',
     ],
     profiles: [
-      { name: 'Сергей Тихонов', signals: 2, words: 28, reactions: 3, files: 1, score: 18, categories: { ideas: 0, questions: 0, help: 1, resources: 1, reflection: 1, coordination: 0, noise: 0 }, role: 'Тихий follow-up недели', summary: 'На неделе 22-28 июня вклад был не про объем, а про поддержание контекста: короткое вложение и пояснение к нему собрали небольшой отклик, но не запустили новую дискуссию. Оценка автора осторожная, потому что MAX не показал отдельную подпись у цепочки сообщений.', evidence: ['25 июня найдено два сообщения в одной входящей цепочке.', 'В цепочке есть одно вложение и три реакции.', 'Новых вопросов, ссылок и развернутой координации за неделю не найдено.'] },
+      { name: 'Екатерина', signals: 2, words: 28, reactions: 3, files: 1, score: 18, categories: { ideas: 0, questions: 0, help: 1, resources: 1, reflection: 1, coordination: 0, noise: 0 }, role: 'Тихий follow-up недели', summary: 'На неделе 22-28 июня вклад Екатерины был не про объем, а про короткое поддержание контекста: вложение и пояснение к нему собрали небольшой отклик, но не запустили новую дискуссию.', evidence: ['25 июня найдено два сообщения в одной входящей цепочке.', 'В цепочке есть одно вложение и три реакции.', 'Новых вопросов, ссылок и развернутой координации за неделю не найдено.'] },
     ],
   } satisfies SemanticSummary,
   participants: [
@@ -131,7 +131,7 @@ export const chatDatabase = {
     { id: 'anastasia', name: 'Анастасия', messages: 9, words: 488, reactions: 31, links: 0, attachments: 1, questions: 0, activeDays: 4, threads: 4, quickResponses: 3 },
     { id: 'yuriy-derevenkin', name: 'Юрий Деревенкин', messages: 14, words: 1065, reactions: 29, links: 0, attachments: 2, questions: 2, activeDays: 6, threads: 4, quickResponses: 8 },
     { id: 'mikhail-khozyainov', name: 'Михаил Хозяинов', messages: 12, words: 416, reactions: 15, links: 1, attachments: 2, questions: 0, activeDays: 4, threads: 2, quickResponses: 8 },
-    { id: 'sergey-tikhonov', name: 'Сергей Тихонов', messages: 14, words: 770, reactions: 20, links: 0, attachments: 2, questions: 2, activeDays: 4, threads: 6, quickResponses: 6 },
+    { id: 'sergey-tikhonov', name: 'Сергей Тихонов', messages: 12, words: 742, reactions: 17, links: 0, attachments: 1, questions: 2, activeDays: 3, threads: 5, quickResponses: 6 },
     { id: 'anna-krylach', name: 'Анна Крылач', messages: 7, words: 360, reactions: 14, links: 0, attachments: 1, questions: 0, activeDays: 2, threads: 2, quickResponses: 1 },
     { id: 'evgenia', name: 'Евгения', messages: 4, words: 152, reactions: 5, links: 0, attachments: 0, questions: 0, activeDays: 3, threads: 2, quickResponses: 2 },
     { id: 'nikita-skrynnikov', name: 'Никита Скрынников', messages: 5, words: 290, reactions: 5, links: 0, attachments: 1, questions: 0, activeDays: 3, threads: 3, quickResponses: 2 },
@@ -150,7 +150,7 @@ export const chatDatabase = {
     inactive('andrey-shestakov', 'Андрей Шестаков'),
     inactive('sergey', 'Сергей'),
     inactive('maksim', 'Максим'),
-    { id: 'ekaterina', name: 'Екатерина', messages: 3, words: 330, reactions: 4, links: 1, attachments: 1, questions: 0, activeDays: 2, threads: 2, quickResponses: 1 },
+    { id: 'ekaterina', name: 'Екатерина', messages: 5, words: 358, reactions: 7, links: 1, attachments: 2, questions: 0, activeDays: 3, threads: 3, quickResponses: 1 },
     { id: 'alexander-shipunov', name: 'Александр Шипунов', messages: 2, words: 120, reactions: 11, links: 0, attachments: 1, questions: 0, activeDays: 1, threads: 1, quickResponses: 0 },
     inactive('margarita-latin', 'Margarita'),
     inactive('vladimir-alekseev', 'Владимир Алексеев'),
